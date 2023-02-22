@@ -1,0 +1,194 @@
+                            | #/* $begin ncopy-ys */
+                            | ##################################################################
+                            | # ncopy.ys - Copy a src block of len words to dst.
+                            | # Return the number of positive words (>0) contained in src.
+                            | #
+                            | # Include your name and ID here.
+                            | #Yusen Wu 2000013137
+                            | # Describe how and why you modified the baseline code.
+                            | #I divide the copy process into two parts:first we copy the ten-times main part.In this stage,I use 10 registers to store ten numbers from %rdi,and use grade-ten cycle-unrolling to load them to 
+                            | # %rsi almost at a time(under the prediction to take the optimistic branch).This part is simple just like that in textbook.
+                            | # next I check whether left length is greater than 10,if yes continue loop ,else begin the remainders processing procedure.Ihis part I use a three-branches tree(not necessarily balanced) to deal with 
+                            | # jump table(to decide the entrance) .Finally add different entrances for different remainder numbers (the 0 to 9 dealt can be used secondly in most cases).(iaddq a negative number and andq itself can # play a "cmp"function)
+                            | # The final result in local machine shows below:
+                            | # Average CPE:7.50(aha,just in command)
+                            | # Total code length:
+                            | # Correctness:68/68(under -p cmd)
+                            | ##################################################################
+                            | # Do not modify this portion
+                            | # Function prologue.
+                            | # %rdi = src, %rsi = dst, %rdx = len
+0x000:                      | ncopy:
+                            | 
+                            | ##################################################################
+                            | # You can modify this portion
+                            | 	# Loop header
+0x000: c0f2f6ffffffffffffff | 	iaddq $-10,%rdx        #len >10? if false jump to left procedure
+0x00a: 72d401000000000000   |         jl root
+0x013:                      | loop1:  
+0x013: 50870000000000000000 |         mrmovq (%rdi),%r8      #first read 10 data items into registers for later use at a time to reduce time
+0x01d: 50970800000000000000 |         mrmovq 8(%rdi),%r9
+0x027: 50a71000000000000000 |         mrmovq 16(%rdi),%r10
+0x031: 50b71800000000000000 |         mrmovq 24(%rdi),%r11
+0x03b: 50c72000000000000000 |         mrmovq 32(%rdi),%r12
+0x045: 50d72800000000000000 |         mrmovq 40(%rdi),%r13
+0x04f: 50e73000000000000000 |         mrmovq 48(%rdi),%r14
+0x059: 50173800000000000000 |         mrmovq 56(%rdi),%rcx
+0x063: 50574000000000000000 |         mrmovq 64(%rdi),%rbp
+0x06d: 50374800000000000000 |         mrmovq 72(%rdi),%rbx
+0x077: 40860000000000000000 |         rmmovq %r8,(%rsi)
+0x081: 6288                 |         andq %r8,%r8           #judge whether >0 ,if true add to count,if  not jump away to next stage
+0x083: 719600000000000000   |         jle loop2
+0x08c: c0f00100000000000000 |         iaddq $1,%rax          #count++
+0x096:                      | loop2:
+                            |          
+0x096: 40960800000000000000 |         rmmovq %r9,8(%rsi)
+0x0a0: 6299                 |         andq %r9,%r9           #judge whether >0
+0x0a2: 71b500000000000000   |         jle loop3
+0x0ab: c0f00100000000000000 |         iaddq $1,%rax          #count++
+0x0b5:                      | loop3:  
+                            |          
+0x0b5: 40a61000000000000000 |         rmmovq %r10,16(%rsi)
+0x0bf: 62aa                 |         andq %r10,%r10         #judge whether >0
+0x0c1: 71d400000000000000   |         jle loop4
+0x0ca: c0f00100000000000000 |         iaddq $1,%rax          #count++
+0x0d4:                      | loop4:
+                            |         
+0x0d4: 40b61800000000000000 |         rmmovq %r11,24(%rsi)
+0x0de: 62bb                 |         andq %r11,%r11         #judge whether >0
+0x0e0: 71f300000000000000   |         jle loop5
+0x0e9: c0f00100000000000000 |         iaddq $1,%rax          #count++
+0x0f3:                      | loop5:  
+                            |          
+0x0f3: 40c62000000000000000 |         rmmovq %r12,32(%rsi)
+0x0fd: 62cc                 |         andq %r12,%r12         #judge whether >0
+0x0ff: 711201000000000000   |         jle loop6
+0x108: c0f00100000000000000 |         iaddq $1,%rax          #count++
+0x112:                      | loop6:
+                            |        
+0x112: 40d62800000000000000 |         rmmovq %r13,40(%rsi)
+0x11c: 62dd                 |         andq %r13,%r13         #judge whether >0
+0x11e: 713101000000000000   |         jle loop7
+0x127: c0f00100000000000000 |         iaddq $1,%rax          #count++
+0x131:                      | loop7:  
+                            |          
+0x131: 40e63000000000000000 |         rmmovq %r14,48(%rsi)
+0x13b: 62ee                 |         andq %r14,%r14        #judge whether >0
+0x13d: 715001000000000000   |         jle loop8
+0x146: c0f00100000000000000 |         iaddq $1,%rax         #count++
+0x150:                      | loop8:
+                            |         
+0x150: 40163800000000000000 |         rmmovq %rcx,56(%rsi)
+0x15a: 6211                 |         andq %rcx,%rcx        #judge whether >0
+0x15c: 716f01000000000000   |         jle loop9
+0x165: c0f00100000000000000 |         iaddq $1,%rax         #count++
+0x16f:                      | loop9:
+                            |         
+0x16f: 40564000000000000000 |         rmmovq %rbp,64(%rsi)
+0x179: 6255                 |         andq %rbp,%rbp        #judge whether >0
+0x17b: 718e01000000000000   |         jle loop10
+0x184: c0f00100000000000000 |         iaddq $1,%rax         #count++
+0x18e:                      | loop10:
+0x18e: 40364800000000000000 |         rmmovq %rbx,72(%rsi)
+0x198: 6233                 |         andq %rbx,%rbx        #judge whether >0
+0x19a: 71ad01000000000000   |         jle check_loop
+0x1a3: c0f00100000000000000 |         iaddq $1,%rax         #count++
+0x1ad:                      | check_loop:
+0x1ad: c0f75000000000000000 |         iaddq $0x50,%rdi      #modify %rsi %rdi to get a new 10-items start point  0x50=80
+0x1b7: c0f65000000000000000 |         iaddq $0x50,%rsi
+0x1c1: c0f2f6ffffffffffffff |         iaddq $-10,%rdx       #len>10?if true begin a new loop ,if false jump to left items procedure
+0x1cb: 751300000000000000   |         jge loop1
+0x1d4:                      | root:                      #the 3-branches tree begins below:
+0x1d4: c0f20700000000000000 |         iaddq $7,%rdx         #len>3?
+0x1de: 762002000000000000   |         jg right_tree         #len>3(most likely),to right tree
+0x1e7: 72f901000000000000   |         jl left_tree          #len<3,to left tree
+0x1f0: 705703000000000000   |         jmp remain_3          #len==3,jmp to situation of remain 3
+0x1f9:                      | left_tree:
+0x1f9: c0f20200000000000000 |         iaddq $2,%rdx         #len>1?
+0x203: 73a903000000000000   |         je remain_1
+0x20c: c0f2ffffffffffffffff |         iaddq $-1,%rdx        #len==2?
+0x216: 738003000000000000   |         je remain_2
+0x21f: 90                   |         ret                   #len==0,return
+0x220:                      | right_tree:
+0x220: c0f2fdffffffffffffff |         iaddq $-3,%rdx        #len>6?
+0x22a: 765802000000000000   |         jg right_son          #len=7,8,9
+0x233: 73dc02000000000000   |         je remain_6           #len==6
+0x23c: c0f20100000000000000 |         iaddq $1,%rdx         #len>5?
+0x246: 730503000000000000   |         je remain_5           #len==5
+0x24f: 722e03000000000000   |         jl remain_4           #len==4
+0x258:                      | right_son:
+0x258: c0f2feffffffffffffff |         iaddq $-2,%rdx        #len>8?
+0x262: 738a02000000000000   |         je remain_8           #len==8
+0x26b: 72b302000000000000   |         jl remain_7           #len==7
+                            |                             #the tree ends here
+0x274:                      | remain_9:
+0x274: 50874000000000000000 |         mrmovq 64(%rdi),%r8   #read data from about %rdi 
+0x27e: 40864000000000000000 |         rmmovq %r8,64(%rsi)   #load data to about %rsi
+0x288: 6288                 |         andq %r8,%r8          #judge whether >0
+0x28a:                      | remain_8:
+0x28a: 50873800000000000000 |         mrmovq 56(%rdi),%r8 
+0x294: 71a702000000000000   |         jle mov_8
+0x29d: c0f00100000000000000 |         iaddq $1,%rax         #if >0 ,count++
+0x2a7:                      | mov_8:
+0x2a7: 40863800000000000000 |         rmmovq %r8,56(%rsi)
+0x2b1: 6288                 |         andq %r8,%r8          #judge whether >0
+0x2b3:                      | remain_7:
+0x2b3: 50873000000000000000 |         mrmovq 48(%rdi),%r8
+0x2bd: 71d002000000000000   |         jle mov_7
+0x2c6: c0f00100000000000000 |         iaddq $1,%rax         #if >0 ,count++
+0x2d0:                      | mov_7:
+0x2d0: 40863000000000000000 |         rmmovq %r8,48(%rsi)
+0x2da: 6288                 |         andq %r8,%r8          #judge whether >0
+0x2dc:                      | remain_6:
+0x2dc: 50872800000000000000 |         mrmovq 40(%rdi),%r8
+0x2e6: 71f902000000000000   |         jle mov_6
+0x2ef: c0f00100000000000000 |         iaddq $1,%rax         #if >0 ,count++
+0x2f9:                      | mov_6:
+0x2f9: 40862800000000000000 |         rmmovq %r8,40(%rsi)
+0x303: 6288                 |         andq %r8,%r8          #judge whether >0
+0x305:                      | remain_5:
+0x305: 50872000000000000000 |         mrmovq 32(%rdi),%r8
+0x30f: 712203000000000000   |         jle mov_5
+0x318: c0f00100000000000000 |         iaddq $1,%rax         #if >0 ,count++
+0x322:                      | mov_5:
+0x322: 40862000000000000000 |         rmmovq %r8,32(%rsi)
+0x32c: 6288                 |         andq %r8,%r8          #judge whether >0
+0x32e:                      | remain_4:
+0x32e: 50871800000000000000 |         mrmovq 24(%rdi),%r8
+0x338: 714b03000000000000   |         jle mov_4
+0x341: c0f00100000000000000 |         iaddq $1,%rax         #if >0 ,count++
+0x34b:                      | mov_4:
+0x34b: 40861800000000000000 |         rmmovq %r8,24(%rsi)
+0x355: 6288                 |         andq %r8,%r8          #judge whether >0
+0x357:                      | remain_3:
+0x357: 50871000000000000000 |         mrmovq 16(%rdi),%r8
+0x361: 717403000000000000   |         jle mov_3
+0x36a: c0f00100000000000000 |         iaddq $1,%rax         #if >0 ,count++
+0x374:                      | mov_3:
+0x374: 40861000000000000000 |         rmmovq %r8,16(%rsi)
+0x37e: 6288                 |         andq %r8,%r8          #judge whether >0
+0x380:                      | remain_2:
+0x380: 50870800000000000000 |         mrmovq 8(%rdi),%r8
+0x38a: 719d03000000000000   |         jle mov_2
+0x393: c0f00100000000000000 |         iaddq $1,%rax         #if >0 ,count++
+0x39d:                      | mov_2:
+0x39d: 40860800000000000000 |         rmmovq %r8,8(%rsi)
+0x3a7: 6288                 |         andq %r8,%r8          #judge whether >0
+0x3a9:                      | remain_1:
+0x3a9: 50870000000000000000 |         mrmovq (%rdi),%r8
+0x3b3: 71c603000000000000   |         jle mov_1
+0x3bc: c0f00100000000000000 |         iaddq $1,%rax         #if >0 ,count++
+0x3c6:                      | mov_1:
+0x3c6: 40860000000000000000 |         rmmovq %r8,(%rsi)
+0x3d0: 6288                 |         andq %r8,%r8          #judge whether >0
+0x3d2: 71e503000000000000   |         jle Done              #if <0,finish(len==0) now
+0x3db: c0f00100000000000000 |         iaddq $1,%rax
+                            | ##################################################################
+                            | # Do not modify the following section of code
+                            | # Function epilogue.
+0x3e5:                      | Done:
+0x3e5: 90                   | 	ret
+                            | ##################################################################
+                            | # Keep the following label at the end of your function
+0x3e6:                      | End:
+                            | #/* $end ncopy-ys */

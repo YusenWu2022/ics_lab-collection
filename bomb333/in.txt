@@ -1,0 +1,6 @@
+As long as I live, my feeling for you will never fade.
+0 1 3 6 10 15
+0 -720      
+1 0
+21 115
+1 4 6 5 2 3

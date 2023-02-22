@@ -1,0 +1,251 @@
+                            | #######################################################################
+                            | # Test for copying block of size 4;
+                            | #######################################################################
+0x000:                      | 	.pos 0
+0x000: 30f4f004000000000000 | main:	irmovq Stack, %rsp  	# Set up stack pointer
+                            | 
+                            | 	# Set up arguments for copy function and then invoke it
+0x00a: 30f20400000000000000 | 	irmovq $4, %rdx		# src and dst have 4 elements
+0x014: 30f64804000000000000 | 	irmovq dest, %rsi	# dst array
+0x01e: 30f71804000000000000 | 	irmovq src, %rdi	# src array
+0x028: 803200000000000000   | 	call ncopy		 
+0x031: 00                   | 	halt			# should halt with num nonzeros in %rax
+0x032:                      | StartFun:
+                            | #/* $begin ncopy-ys */
+                            | ##################################################################
+                            | # ncopy.ys - Copy a src block of len words to dst.
+                            | # Return the number of positive words (>0) contained in src.
+                            | #
+                            | # Include your name and ID here.
+                            | #Yusen Wu 2000013137
+                            | # Describe how and why you modified the baseline code.
+                            | #I divide the copy process into two parts:first we copy the ten-times main part.In this stage,I use 10 registers to store ten numbers from %rdi,and use grade-ten cycle-unrolling to load them to 
+                            | # %rsi almost at a time(under the prediction to take the optimistic branch).This part is simple just like that in textbook.
+                            | # next I check whether left length is greater than 10,if yes continue loop ,else begin the remainders processing procedure.Ihis part I use a three-branches tree(not necessarily balanced) to deal with 
+                            | # jump table(to decide the entrance) .Finally add different entrances for different remainder numbers (the 0 to 9 dealt can be used secondly in most cases).(iaddq a negative number and andq itself can # play a "cmp"function)
+                            | # The final result in local machine shows below:
+                            | # Average CPE:7.50(aha,just in command)
+                            | # Total code length:998  (not easy hhhh)
+                            | # Correctness:68/68(under -p cmd)
+                            | ##################################################################
+                            | # Do not modify this portion
+                            | # Function prologue.
+                            | # %rdi = src, %rsi = dst, %rdx = len
+0x032:                      | ncopy:
+                            | 
+                            | ##################################################################
+                            | # You can modify this portion
+                            | 	# Loop header
+0x032: c0f2f6ffffffffffffff | 	iaddq $-10,%rdx        #len >10? if false jump to left procedure
+0x03c: 720602000000000000   |         jl root
+0x045:                      | loop1:  
+0x045: 50870000000000000000 |         mrmovq (%rdi),%r8      #first read 10 data items into registers for later use at a time to reduce time
+0x04f: 50970800000000000000 |         mrmovq 8(%rdi),%r9
+0x059: 50a71000000000000000 |         mrmovq 16(%rdi),%r10
+0x063: 50b71800000000000000 |         mrmovq 24(%rdi),%r11
+0x06d: 50c72000000000000000 |         mrmovq 32(%rdi),%r12
+0x077: 50d72800000000000000 |         mrmovq 40(%rdi),%r13
+0x081: 50e73000000000000000 |         mrmovq 48(%rdi),%r14
+0x08b: 50173800000000000000 |         mrmovq 56(%rdi),%rcx
+0x095: 50574000000000000000 |         mrmovq 64(%rdi),%rbp
+0x09f: 50374800000000000000 |         mrmovq 72(%rdi),%rbx
+0x0a9: 40860000000000000000 |         rmmovq %r8,(%rsi)
+0x0b3: 6288                 |         andq %r8,%r8           #judge whether >0 ,if true add to count,if  not jump away to next stage
+0x0b5: 71c800000000000000   |         jle loop2
+0x0be: c0f00100000000000000 |         iaddq $1,%rax          #count++
+0x0c8:                      | loop2:
+                            |          
+0x0c8: 40960800000000000000 |         rmmovq %r9,8(%rsi)
+0x0d2: 6299                 |         andq %r9,%r9           #judge whether >0
+0x0d4: 71e700000000000000   |         jle loop3
+0x0dd: c0f00100000000000000 |         iaddq $1,%rax          #count++
+0x0e7:                      | loop3:  
+                            |          
+0x0e7: 40a61000000000000000 |         rmmovq %r10,16(%rsi)
+0x0f1: 62aa                 |         andq %r10,%r10         #judge whether >0
+0x0f3: 710601000000000000   |         jle loop4
+0x0fc: c0f00100000000000000 |         iaddq $1,%rax          #count++
+0x106:                      | loop4:
+                            |         
+0x106: 40b61800000000000000 |         rmmovq %r11,24(%rsi)
+0x110: 62bb                 |         andq %r11,%r11         #judge whether >0
+0x112: 712501000000000000   |         jle loop5
+0x11b: c0f00100000000000000 |         iaddq $1,%rax          #count++
+0x125:                      | loop5:  
+                            |          
+0x125: 40c62000000000000000 |         rmmovq %r12,32(%rsi)
+0x12f: 62cc                 |         andq %r12,%r12         #judge whether >0
+0x131: 714401000000000000   |         jle loop6
+0x13a: c0f00100000000000000 |         iaddq $1,%rax          #count++
+0x144:                      | loop6:
+                            |        
+0x144: 40d62800000000000000 |         rmmovq %r13,40(%rsi)
+0x14e: 62dd                 |         andq %r13,%r13         #judge whether >0
+0x150: 716301000000000000   |         jle loop7
+0x159: c0f00100000000000000 |         iaddq $1,%rax          #count++
+0x163:                      | loop7:  
+                            |          
+0x163: 40e63000000000000000 |         rmmovq %r14,48(%rsi)
+0x16d: 62ee                 |         andq %r14,%r14        #judge whether >0
+0x16f: 718201000000000000   |         jle loop8
+0x178: c0f00100000000000000 |         iaddq $1,%rax         #count++
+0x182:                      | loop8:
+                            |         
+0x182: 40163800000000000000 |         rmmovq %rcx,56(%rsi)
+0x18c: 6211                 |         andq %rcx,%rcx        #judge whether >0
+0x18e: 71a101000000000000   |         jle loop9
+0x197: c0f00100000000000000 |         iaddq $1,%rax         #count++
+0x1a1:                      | loop9:
+                            |         
+0x1a1: 40564000000000000000 |         rmmovq %rbp,64(%rsi)
+0x1ab: 6255                 |         andq %rbp,%rbp        #judge whether >0
+0x1ad: 71c001000000000000   |         jle loop10
+0x1b6: c0f00100000000000000 |         iaddq $1,%rax         #count++
+0x1c0:                      | loop10:
+0x1c0: 40364800000000000000 |         rmmovq %rbx,72(%rsi)
+0x1ca: 6233                 |         andq %rbx,%rbx        #judge whether >0
+0x1cc: 71df01000000000000   |         jle check_loop
+0x1d5: c0f00100000000000000 |         iaddq $1,%rax         #count++
+0x1df:                      | check_loop:
+0x1df: c0f75000000000000000 |         iaddq $0x50,%rdi      #modify %rsi %rdi to get a new 10-items start point  0x50=80
+0x1e9: c0f65000000000000000 |         iaddq $0x50,%rsi
+0x1f3: c0f2f6ffffffffffffff |         iaddq $-10,%rdx       #len>10?if true begin a new loop ,if false jump to left items procedure
+0x1fd: 754500000000000000   |         jge loop1
+0x206:                      | root:                      #the 3-branches tree begins below:
+0x206: c0f20700000000000000 |         iaddq $7,%rdx         #len>3?
+0x210: 765202000000000000   |         jg right_tree         #len>3(most likely),to right tree
+0x219: 722b02000000000000   |         jl left_tree          #len<3,to left tree
+0x222: 708903000000000000   |         jmp remain_3          #len==3,jmp to situation of remain 3
+0x22b:                      | left_tree:
+0x22b: c0f20200000000000000 |         iaddq $2,%rdx         #len>1?
+0x235: 73db03000000000000   |         je remain_1
+0x23e: c0f2ffffffffffffffff |         iaddq $-1,%rdx        #len==2?
+0x248: 73b203000000000000   |         je remain_2
+0x251: 90                   |         ret                   #len==0,return
+0x252:                      | right_tree:
+0x252: c0f2fdffffffffffffff |         iaddq $-3,%rdx        #len>6?
+0x25c: 768a02000000000000   |         jg right_son          #len=7,8,9
+0x265: 730e03000000000000   |         je remain_6           #len==6
+0x26e: c0f20100000000000000 |         iaddq $1,%rdx         #len>5?
+0x278: 733703000000000000   |         je remain_5           #len==5
+0x281: 726003000000000000   |         jl remain_4           #len==4
+0x28a:                      | right_son:
+0x28a: c0f2feffffffffffffff |         iaddq $-2,%rdx        #len>8?
+0x294: 73bc02000000000000   |         je remain_8           #len==8
+0x29d: 72e502000000000000   |         jl remain_7           #len==7
+                            |                             #the tree ends here
+0x2a6:                      | remain_9:
+0x2a6: 50874000000000000000 |         mrmovq 64(%rdi),%r8   #read data from about %rdi 
+0x2b0: 40864000000000000000 |         rmmovq %r8,64(%rsi)   #load data to about %rsi
+0x2ba: 6288                 |         andq %r8,%r8          #judge whether >0
+0x2bc:                      | remain_8:
+0x2bc: 50873800000000000000 |         mrmovq 56(%rdi),%r8 
+0x2c6: 71d902000000000000   |         jle mov_8
+0x2cf: c0f00100000000000000 |         iaddq $1,%rax         #if >0 ,count++
+0x2d9:                      | mov_8:
+0x2d9: 40863800000000000000 |         rmmovq %r8,56(%rsi)
+0x2e3: 6288                 |         andq %r8,%r8          #judge whether >0
+0x2e5:                      | remain_7:
+0x2e5: 50873000000000000000 |         mrmovq 48(%rdi),%r8
+0x2ef: 710203000000000000   |         jle mov_7
+0x2f8: c0f00100000000000000 |         iaddq $1,%rax         #if >0 ,count++
+0x302:                      | mov_7:
+0x302: 40863000000000000000 |         rmmovq %r8,48(%rsi)
+0x30c: 6288                 |         andq %r8,%r8          #judge whether >0
+0x30e:                      | remain_6:
+0x30e: 50872800000000000000 |         mrmovq 40(%rdi),%r8
+0x318: 712b03000000000000   |         jle mov_6
+0x321: c0f00100000000000000 |         iaddq $1,%rax         #if >0 ,count++
+0x32b:                      | mov_6:
+0x32b: 40862800000000000000 |         rmmovq %r8,40(%rsi)
+0x335: 6288                 |         andq %r8,%r8          #judge whether >0
+0x337:                      | remain_5:
+0x337: 50872000000000000000 |         mrmovq 32(%rdi),%r8
+0x341: 715403000000000000   |         jle mov_5
+0x34a: c0f00100000000000000 |         iaddq $1,%rax         #if >0 ,count++
+0x354:                      | mov_5:
+0x354: 40862000000000000000 |         rmmovq %r8,32(%rsi)
+0x35e: 6288                 |         andq %r8,%r8          #judge whether >0
+0x360:                      | remain_4:
+0x360: 50871800000000000000 |         mrmovq 24(%rdi),%r8
+0x36a: 717d03000000000000   |         jle mov_4
+0x373: c0f00100000000000000 |         iaddq $1,%rax         #if >0 ,count++
+0x37d:                      | mov_4:
+0x37d: 40861800000000000000 |         rmmovq %r8,24(%rsi)
+0x387: 6288                 |         andq %r8,%r8          #judge whether >0
+0x389:                      | remain_3:
+0x389: 50871000000000000000 |         mrmovq 16(%rdi),%r8
+0x393: 71a603000000000000   |         jle mov_3
+0x39c: c0f00100000000000000 |         iaddq $1,%rax         #if >0 ,count++
+0x3a6:                      | mov_3:
+0x3a6: 40861000000000000000 |         rmmovq %r8,16(%rsi)
+0x3b0: 6288                 |         andq %r8,%r8          #judge whether >0
+0x3b2:                      | remain_2:
+0x3b2: 50870800000000000000 |         mrmovq 8(%rdi),%r8
+0x3bc: 71cf03000000000000   |         jle mov_2
+0x3c5: c0f00100000000000000 |         iaddq $1,%rax         #if >0 ,count++
+0x3cf:                      | mov_2:
+0x3cf: 40860800000000000000 |         rmmovq %r8,8(%rsi)
+0x3d9: 6288                 |         andq %r8,%r8          #judge whether >0
+0x3db:                      | remain_1:
+0x3db: 50870000000000000000 |         mrmovq (%rdi),%r8
+0x3e5: 71f803000000000000   |         jle mov_1
+0x3ee: c0f00100000000000000 |         iaddq $1,%rax         #if >0 ,count++
+0x3f8:                      | mov_1:
+0x3f8: 40860000000000000000 |         rmmovq %r8,(%rsi)
+0x402: 6288                 |         andq %r8,%r8          #judge whether >0
+0x404: 711704000000000000   |         jle Done              #if <0,finish(len==0) now
+0x40d: c0f00100000000000000 |         iaddq $1,%rax
+                            | ##################################################################
+                            | # Do not modify the following section of code
+                            | # Function epilogue.
+0x417:                      | Done:
+0x417: 90                   | 	ret
+                            | ##################################################################
+                            | # Keep the following label at the end of your function
+0x418:                      | End:
+                            | #/* $end ncopy-ys */
+0x418:                      | EndFun:
+                            | 
+                            | ###############################
+                            | # Source and destination blocks 
+                            | ###############################
+0x418:                      | 	.align 8
+0x418:                      | src:
+0x418: ffffffffffffffff     | 	.quad -1
+0x420: 0200000000000000     | 	.quad 2
+0x428: 0300000000000000     | 	.quad 3
+0x430: fcffffffffffffff     | 	.quad -4
+0x438: fadebc0000000000     | 	.quad 0xbcdefa # This shouldn't get moved
+                            | 
+0x440:                      | 	.align 16
+0x440:                      | Predest:
+0x440: fadebc0000000000     | 	.quad 0xbcdefa
+0x448:                      | dest:
+0x448: abefcd0000000000     | 	.quad 0xcdefab
+0x450: abefcd0000000000     | 	.quad 0xcdefab
+0x458: abefcd0000000000     | 	.quad 0xcdefab
+0x460: abefcd0000000000     | 	.quad 0xcdefab
+0x468:                      | Postdest:
+0x468: bcfade0000000000     | 	.quad 0xdefabc
+                            | 
+0x470:                      | .align 8
+                            | # Run time stack
+0x470: 0000000000000000     | 	.quad 0
+0x478: 0000000000000000     | 	.quad 0
+0x480: 0000000000000000     | 	.quad 0
+0x488: 0000000000000000     | 	.quad 0
+0x490: 0000000000000000     | 	.quad 0
+0x498: 0000000000000000     | 	.quad 0
+0x4a0: 0000000000000000     | 	.quad 0
+0x4a8: 0000000000000000     | 	.quad 0
+0x4b0: 0000000000000000     | 	.quad 0
+0x4b8: 0000000000000000     | 	.quad 0
+0x4c0: 0000000000000000     | 	.quad 0
+0x4c8: 0000000000000000     | 	.quad 0
+0x4d0: 0000000000000000     | 	.quad 0
+0x4d8: 0000000000000000     | 	.quad 0
+0x4e0: 0000000000000000     | 	.quad 0
+0x4e8: 0000000000000000     | 	.quad 0
+                            | 
+0x4f0:                      | Stack:

@@ -1,0 +1,68 @@
+#bubble.ys by Yusen Wu
+
+# Execution begins at address 0
+
+        .pos 0
+        irmovq stack,%rsp
+        call main
+        halt
+#sample
+        .align 8
+Array:
+       .quad  0xbca
+       .quad  0xcba
+       .quad  0xacb
+       .quad  0xcab
+       .quad  0xabc
+       .quad  0xbac
+
+main: 
+        irmovq Array, %rdi
+	irmovq $6, %rsi
+	call bubble_sort
+	ret
+
+bubble_sort:
+       rrmovq %rsi,%r12
+       addq %r12,%rsi
+       rrmovq %rsi,%r12
+       addq %r12,%rsi
+       rrmovq %rsi,%r12
+       addq %r12,%rsi
+       addq %rdi,%rsi
+       irmovq $0x8,%r11
+       subq %r11,%rsi
+       jmp test1
+
+test2:
+       addq %r11,%rax
+       
+sign:
+       rrmovq %rsi,%r8
+       rrmovq %rax,%r9
+       subq %r8,%r9
+       jge flag
+       mrmovq 0x8(%rax),%rdx
+       rrmovq %rdx,%r10
+       mrmovq (%rax),%rcx
+       subq %rcx,%r10
+       jge test2
+       rmmovq %rcx,0x8(%rax)
+       rmmovq %rdx,(%rax)
+       jmp test2
+
+flag: 
+       subq %r11,%rsi
+test1:
+       pushq %rsi
+       subq %rdi,%rsi
+       popq %rsi
+       jle end
+       rrmovq %rdi,%rax
+       jmp sign
+
+end: 
+      ret
+.pos 0x300
+stack:
+
